@@ -1,4 +1,4 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { useAuth } from "@/hooks/useAuth";
@@ -7,10 +7,12 @@ import { LogOut } from "lucide-react";
 
 const Layout = () => {
   const { signOut } = useAuth();
+  const navigate = useNavigate();
 
   const handleSignOut = async () => {
     try {
       await signOut();
+      navigate('/', { replace: true });
     } catch (error) {
       console.error('Sign out error:', error);
     }
@@ -26,8 +28,8 @@ const Layout = () => {
             <div className="flex items-center space-x-2">
               <SidebarTrigger />
               <div className="ml-4 flex items-center space-x-2">
-                <div className="h-6 w-6 rounded gradient-hero flex items-center justify-center">
-                  <span className="text-xs font-bold text-white">E</span>
+                <div className="h-6 w-6 rounded overflow-hidden">
+                  <img src="/logo.svg" alt="EquiShare Logo" className="h-full w-full object-cover" />
                 </div>
                 <span className="font-semibold text-foreground">EquiShare</span>
               </div>

@@ -5,9 +5,9 @@ import {
   TrendingUp, 
   Calculator, 
   Users,
-  DollarSign,
   Activity
 } from "lucide-react";
+import RupeeIcon from '@/components/RupeeIcon';
 import { Link } from "react-router-dom";
 import { formatCurrency } from "@/lib/utils";
 
@@ -18,7 +18,7 @@ const Dashboard = () => {
       title: "Total Balance",
       value: "₹156.25",
       description: "Net amount you're owed",
-      icon: DollarSign,
+      icon: RupeeIcon,
       color: "text-success",
       bgColor: "bg-success/10"
     },

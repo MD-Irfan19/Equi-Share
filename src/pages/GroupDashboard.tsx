@@ -5,7 +5,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, Plus, DollarSign, ArrowLeft, Copy } from 'lucide-react';
+import { Users, Plus, ArrowLeft, Copy } from 'lucide-react';
+import RupeeIcon from '@/components/RupeeIcon';
 import { Link } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { formatCurrency } from '@/lib/utils'; // Import the utility
@@ -269,7 +270,7 @@ export default function GroupDashboard() {
           <Link to={`/dashboard/expenses?group=${groupId}`}>
             <Card className="shadow-medium border-0 bg-card hover:shadow-large transition-shadow cursor-pointer">
               <CardContent className="pt-6 text-center">
-                <DollarSign className="h-4 w-4 text-accent" />
+                <RupeeIcon className="h-4 w-4 text-accent" />
                 <p className="font-medium text-foreground">View Expenses</p>
                 <p className="text-sm text-muted-foreground">See all group expenses</p>
               </CardContent>
@@ -299,7 +300,7 @@ export default function GroupDashboard() {
           <Link to={`/dashboard/analytics?group=${groupId}`}>
             <Card className="shadow-medium border-0 bg-card hover:shadow-large transition-shadow cursor-pointer">
               <CardContent className="pt-6 text-center">
-                <DollarSign className="h-4 w-4 text-warning" />
+                <RupeeIcon className="h-4 w-4 text-warning" />
                 <p className="font-medium text-foreground">Analytics</p>
                 <p className="text-sm text-muted-foreground">Group spending insights</p>
               </CardContent>

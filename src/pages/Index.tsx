@@ -32,8 +32,8 @@ const Index = () => {
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <div className="h-8 w-8 rounded-lg gradient-hero flex items-center justify-center">
-                <Users className="h-4 w-4 text-white" />
+              <div className="h-8 w-8 rounded-lg overflow-hidden">
+                <img src="/logo.svg" alt="EquiShare Logo" className="h-full w-full object-cover" />
               </div>
               <span className="text-xl font-bold text-foreground">EquiShare</span>
             </div>

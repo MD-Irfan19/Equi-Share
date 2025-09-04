@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -18,22 +19,33 @@ import {
   ArrowLeft 
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { formatCurrency } from "@/lib/utils"; // Import the utility
+import { formatCurrency } from "@/lib/utils";
+import { useGroups } from "@/hooks/useGroups";
+import { useCreateExpense } from "@/hooks/useExpenses";
+import { useToast } from "@/hooks/use-toast";
 
 const NewExpense = () => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { toast } = useToast();
+  const { data: groups = [], isLoading: groupsLoading } = useGroups();
+  const createExpenseMutation = useCreateExpense();
+  
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [selectedGroup, setSelectedGroup] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [splitType, setSplitType] = useState("equal");
+  const [notes, setNotes] = useState("");
 
-  // Mock data
-  const groups = [
-    { id: "1", name: "Weekend Trip", members: ["You", "Sarah", "Mike", "Jane"] },
-    { id: "2", name: "Apartment", members: ["You", "Alex", "Sam"] },
-    { id: "3", name: "Office Lunch", members: ["You", "Tom", "Lisa", "Carol", "David", "Emma"] }
-  ];
+  // Set initial group from URL params if available
+  useEffect(() => {
+    const groupId = searchParams.get('group');
+    if (groupId) {
+      setSelectedGroup(groupId);
+    }
+  }, [searchParams]);
 
   const categories = [
     { value: "food", label: "Food & Dining", icon: "🍽️" },
@@ -47,29 +59,70 @@ const NewExpense = () => {
 
   const selectedGroupData = groups.find(g => g.id === selectedGroup);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, this would submit to the backend
-    console.log({
-      amount: parseFloat(amount),
-      description,
-      category: selectedCategory,
-      group: selectedGroup,
-      date,
-      splitType
-    });
+    
+    if (!selectedGroup || !amount || !description || !selectedCategory || !date) {
+      toast({
+        title: "Missing information",
+        description: "Please fill in all required fields",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Validate amount is a valid number
+    const amountValue = parseFloat(amount);
+    if (isNaN(amountValue) || amountValue <= 0) {
+      toast({
+        title: "Invalid amount",
+        description: "Please enter a valid positive amount",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      await createExpenseMutation.mutateAsync({
+        group_id: selectedGroup,
+        amount: amountValue,
+        description,
+        category: selectedCategory,
+        expense_date: date,
+        split_type: splitType as 'equal' | 'custom',
+        // We're only implementing equal splits for now
+      });
+      
+      toast({
+        title: "Expense added",
+        description: "Your expense has been recorded successfully"
+      });
+      
+      // Navigate back to the group dashboard or expenses list
+      navigate(`/dashboard/groups/${selectedGroup}`);
+      
+    } catch (error: any) {
+      toast({
+        title: "Error adding expense",
+        description: error.message || "Failed to add expense",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link to="/expenses">
-          <Button variant="ghost" size="sm" className="flex items-center gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Button>
-        </Link>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="flex items-center gap-2"
+          onClick={() => navigate(-1)}
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </Button>
         <div>
           <h1 className="text-3xl font-bold text-foreground">Add New Expense</h1>
           <p className="text-muted-foreground">Record a group expense and split it fairly</p>
@@ -126,17 +179,23 @@ const NewExpense = () => {
                     <SelectValue placeholder="Select a group" />
                   </SelectTrigger>
                   <SelectContent>
-                    {groups.map((group) => (
-                      <SelectItem key={group.id} value={group.id}>
-                        <div className="flex items-center gap-2">
-                          <Users className="h-4 w-4" />
-                          {group.name}
-                          <Badge variant="secondary" className="ml-auto">
-                            {group.members.length} members
-                          </Badge>
-                        </div>
-                      </SelectItem>
-                    ))}
+                    {groupsLoading ? (
+                      <SelectItem value="loading" disabled>Loading groups...</SelectItem>
+                    ) : groups.length === 0 ? (
+                      <SelectItem value="none" disabled>No groups found</SelectItem>
+                    ) : (
+                      groups.map((group) => (
+                        <SelectItem key={group.id} value={group.id}>
+                          <div className="flex items-center gap-2">
+                            <Users className="h-4 w-4" />
+                            {group.name}
+                            <Badge variant="secondary" className="ml-auto">
+                              {group.member_count} members
+                            </Badge>
+                          </div>
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -203,10 +262,10 @@ const NewExpense = () => {
                         Split equally
                       </div>
                     </SelectItem>
-                    <SelectItem value="custom">
+                    <SelectItem value="custom" disabled>
                       <div className="flex items-center gap-2">
                         <Tag className="h-4 w-4" />
-                        Custom split
+                        Custom split (coming soon)
                       </div>
                     </SelectItem>
                   </SelectContent>
@@ -220,6 +279,8 @@ const NewExpense = () => {
                   id="notes"
                   placeholder="Any additional details..."
                   className="min-h-[80px]"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
                 />
               </div>
 
@@ -227,9 +288,9 @@ const NewExpense = () => {
               <Button 
                 type="submit" 
                 className="w-full gradient-hero text-white border-0 hover:opacity-90"
-                disabled={!amount || !description || !selectedGroup || !selectedCategory}
+                disabled={!amount || !description || !selectedGroup || !selectedCategory || createExpenseMutation.isPending}
               >
-                Add Expense
+                {createExpenseMutation.isPending ? 'Adding...' : 'Add Expense'}
               </Button>
             </form>
           </CardContent>
@@ -252,15 +313,15 @@ const NewExpense = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-foreground">Split between {selectedGroupData.members.length} members:</p>
-                  {selectedGroupData.members.map((member, index) => (
-                    <div key={index} className="flex justify-between items-center p-2 bg-background/30 rounded">
-                      <span className="text-sm">{member}</span>
+                  <p className="text-sm font-medium text-foreground">Split between {selectedGroupData.member_count} members:</p>
+                  {selectedGroupData && selectedGroupData.member_count > 0 && (
+                    <div className="flex justify-between items-center p-2 bg-background/30 rounded">
+                      <span className="text-sm">Per person</span>
                       <span className="font-semibold">
-                        {formatCurrency(splitType === "equal" ? (parseFloat(amount) / selectedGroupData.members.length) : 0)}
+                        {formatCurrency(splitType === "equal" && amount ? (parseFloat(amount) / selectedGroupData.member_count) : 0)}
                       </span>
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             ) : (

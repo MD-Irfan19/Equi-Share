@@ -107,13 +107,13 @@ export const LearnMoreModal = ({ open, onOpenChange }: LearnMoreModalProps) => {
 
           {/* Footer CTA */}
           <div className="pt-4 border-t">
-            <Link to="/auth" className="block">
+            <Link to="/demo" className="block">
               <Button 
                 size="lg" 
                 className="w-full bg-primary text-primary-foreground hover:bg-primary-hover shadow-glow"
                 onClick={() => onOpenChange(false)}
               >
-                Join EquiShare Today
+                View Demo
               </Button>
             </Link>
           </div>
